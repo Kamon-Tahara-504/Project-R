@@ -56,7 +56,7 @@ public struct TaskListView: View {
     @ViewBuilder
     private var taskList: some View {
         if viewModel.visibleTasks.isEmpty {
-            ContentUnavailableView("タスクはまだありません", systemImage: "checklist")
+            ContentUnavailableView(viewModel.emptyStateTitle, systemImage: "checklist")
                 .frame(maxHeight: .infinity)
         } else {
             List {

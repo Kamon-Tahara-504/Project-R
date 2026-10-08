@@ -37,11 +37,11 @@ public final class TaskService {
         await syncNotification(for: task)
     }
 
-    /// 完了状態を反転させ、更新後のタスクを返す
+    /// 完了状態を反転させ、更新後のタスクを返す。完了にしたときは現在時刻を完了日時として記録する
     @discardableResult
     public func toggleCompletion(_ task: TaskItem) async throws -> TaskItem {
         var toggled = task
-        toggled.isCompleted.toggle()
+        toggled.completedAt = task.isCompleted ? nil : now()
         try await update(toggled)
         return toggled
     }

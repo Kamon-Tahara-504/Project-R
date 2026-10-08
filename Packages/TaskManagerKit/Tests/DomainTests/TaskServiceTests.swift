@@ -52,6 +52,19 @@ struct TaskServiceTests {
         #expect(await scheduler.scheduledIDs == [task.id])
     }
 
+    @Test("完了にすると現在時刻を完了日時として記録し、未完了に戻すと消す")
+    func toggleCompletionRecordsCompletedAt() async throws {
+        let service = makeService()
+        let task = TaskItem(title: "課題")
+        try await service.add(task)
+
+        let completed = try await service.toggleCompletion(task)
+        #expect(completed.completedAt == now)
+
+        let reopened = try await service.toggleCompletion(completed)
+        #expect(reopened.completedAt == nil)
+    }
+
     @Test("全体設定が OFF なら通知しない")
     func disabledNotificationsAreNotScheduled() async throws {
         settings.save(AppSettings(notificationsEnabled: false))
@@ -88,7 +101,7 @@ struct TaskServiceTests {
     @Test("通知を作り直すと、通知すべき未完了タスクだけが登録される")
     func rescheduleAllRegistersOnlyPendingFutureTasks() async throws {
         let pending = TaskItem(title: "未完了", notifyAt: future)
-        let completed = TaskItem(title: "完了", isCompleted: true, notifyAt: future)
+        let completed = TaskItem(title: "完了", completedAt: past, notifyAt: future)
         try await repository.add(pending)
         try await repository.add(completed)
 

@@ -56,9 +56,10 @@ struct TaskEditorViewModelTests {
         #expect(!viewModel.canSave)
     }
 
-    @Test("編集では ID・作成日時・完了状態を引き継ぐ")
+    @Test("編集では ID・作成日時・完了日時を引き継ぐ")
     func editKeepsIdentity() async throws {
-        let original = TaskItem(title: "前", isCompleted: true, createdAt: TestCalendar.date(2025, 12, 1))
+        let original = TaskItem(
+            title: "前", completedAt: TestCalendar.date(2025, 12, 2), createdAt: TestCalendar.date(2025, 12, 1))
         let fixture = TaskServiceFixture(tasks: [original])
         let viewModel = makeViewModel(task: original, fixture: fixture)
         viewModel.title = "後"
@@ -68,7 +69,7 @@ struct TaskEditorViewModelTests {
         let saved = try #require(try await fixture.taskRepository.fetchAll().first)
         #expect(saved.id == original.id)
         #expect(saved.createdAt == original.createdAt)
-        #expect(saved.isCompleted)
+        #expect(saved.completedAt == original.completedAt)
         #expect(saved.title == "後")
     }
 

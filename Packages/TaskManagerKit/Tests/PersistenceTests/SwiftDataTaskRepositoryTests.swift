@@ -1,7 +1,8 @@
 import Domain
 import Foundation
-import Persistence
 import Testing
+
+@testable import Persistence
 
 @MainActor
 struct SwiftDataTaskRepositoryTests {
@@ -28,10 +29,18 @@ struct SwiftDataTaskRepositoryTests {
         try await repository.add(task)
 
         task.title = "更新後"
-        task.isCompleted = true
+        task.completedAt = Date(timeIntervalSince1970: 200)
         try await repository.update(task)
 
         #expect(try await repository.fetchAll() == [task])
+    }
+
+    @Test("完了日時を記録する前に完了したタスクは、作成日時を完了日時として読み出す")
+    func legacyCompletedTaskUsesCreatedAt() {
+        let createdAt = Date(timeIntervalSince1970: 100)
+        let record = TaskItemRecord(id: UUID(), title: "以前のタスク", isCompleted: true, createdAt: createdAt)
+
+        #expect(record.toDomain().completedAt == createdAt)
     }
 
     @Test("タスクを削除できる")

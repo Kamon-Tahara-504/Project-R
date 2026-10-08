@@ -140,7 +140,7 @@ public final class TaskEditorViewModel: Identifiable {
         TaskItem(
             id: original?.id ?? UUID(),
             title: trimmedTitle,
-            isCompleted: original?.isCompleted ?? false,
+            completedAt: original?.completedAt,
             createdAt: original?.createdAt ?? now(),
             categoryID: categoryID,
             dueDate: hasDueDate ? dueDate : nil,
