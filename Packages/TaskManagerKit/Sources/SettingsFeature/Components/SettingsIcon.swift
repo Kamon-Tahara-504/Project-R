@@ -4,13 +4,15 @@ import SwiftUI
 struct SettingsIcon: View {
     let systemName: String
     let color: Color
+    /// 薄く表示するときの不透明度
+    var opacity: Double = 1
 
     var body: some View {
         Image(systemName: systemName)
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(.white.opacity(opacity))
             .frame(width: SettingsMetrics.iconSize, height: SettingsMetrics.iconSize)
-            .background(color, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .background(color.opacity(opacity), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
 }
 

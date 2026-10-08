@@ -10,6 +10,8 @@ enum SettingsMetrics {
     /// アイコンと項目名の間隔
     static let labelSpacing: CGFloat = 12
     static let cardCornerRadius: CGFloat = 24
+    /// 操作できない行の不透明度
+    static let disabledOpacity = 0.4
 }
 
 /// 設定の行をまとめるリキッドグラスのカード。タスク画面のカードと見た目を揃えるため、共通のガラス背景を使う
@@ -49,16 +51,26 @@ struct SettingsRowDivider: View {
     }
 }
 
-/// 色付きのアイコンと項目名
+/// 色付きのアイコンと項目名。操作できない間（`disabled`）は薄く表示する
 struct SettingsLabel: View {
     let title: String
     let systemName: String
     let color: Color
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
+        // `.opacity` や `.primary.opacity` で薄くすると、外観の切り替え（ウィンドウのクロスディゾルブ）の間だけ
+        // ガラスの中で透明度が外れ、一瞬濃く写る。透明度を持たせた具体的な色で塗って薄くする
+        let opacity = isEnabled ? 1 : SettingsMetrics.disabledOpacity
         HStack(spacing: SettingsMetrics.labelSpacing) {
-            SettingsIcon(systemName: systemName, color: color)
+            SettingsIcon(systemName: systemName, color: color, opacity: opacity)
             Text(title)
+                .foregroundStyle(titleStyle)
         }
+    }
+
+    /// 操作できる間は外から指定された文字色（削除の行の赤など）をそのまま使う
+    private var titleStyle: AnyShapeStyle {
+        isEnabled ? AnyShapeStyle(.foreground) : AnyShapeStyle(Color(.label).opacity(SettingsMetrics.disabledOpacity))
     }
 }

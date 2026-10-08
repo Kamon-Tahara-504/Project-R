@@ -5,8 +5,6 @@ import UIKit
 
 /// 設定画面。利用時間・通知・タスクデータの削除を、iOS の設定アプリと同じ並びのリキッドグラスのカードで行う
 public struct SettingsView: View {
-    /// 利用時間が OFF の間の、時刻の行の不透明度
-    private static let disabledOpacity = 0.4
     /// カード同士の間隔
     private static let cardSpacing: CGFloat = 20
     /// 画面の左右の余白。タスク画面と揃える
@@ -70,25 +68,32 @@ public struct SettingsView: View {
                 }
             }
             SettingsRowDivider()
-            // OFF の間も設定済みの時刻が分かるよう、隠さずに半透明で操作できなくする
+            // OFF の間も設定済みの時刻が分かるよう、隠さずに薄くして操作できなくする
             Group {
-                SettingsRow {
-                    DatePicker(selection: startTime, displayedComponents: .hourAndMinute) {
-                        SettingsLabel(title: "開始", systemName: "sun.max.fill", color: .orange)
-                    }
-                }
+                timeRow(title: "開始", systemName: "sun.max.fill", color: .orange, selection: startTime)
                 SettingsRowDivider()
-                SettingsRow {
-                    DatePicker(selection: endTime, displayedComponents: .hourAndMinute) {
-                        SettingsLabel(title: "終了", systemName: "moon.fill", color: .blue)
-                    }
-                }
+                timeRow(title: "終了", systemName: "moon.fill", color: .blue, selection: endTime)
             }
             .disabled(!viewModel.settings.usageTime.isEnabled)
-            .opacity(viewModel.settings.usageTime.isEnabled ? 1 : Self.disabledOpacity)
             SettingsDescription(
                 text: "開始から終了までの間だけアプリを使えるようにします。時間外にアプリを開くと休憩画面が表示され、確認したときだけタスクを見られます。"
             )
+        }
+    }
+
+    /// 項目名と時刻の選択ボタンの行。
+    ///
+    /// 項目名は SettingsLabel が色の透明度で薄くし、`.opacity` は UIKit の部品である選択ボタンにだけ掛ける。
+    /// SwiftUI で描いた部分に `.opacity` を掛けると、外観の切り替え中にガラスの中で透明度が外れて一瞬濃く写るため
+    private func timeRow(title: String, systemName: String, color: Color, selection: Binding<Date>) -> some View {
+        SettingsRow {
+            HStack {
+                SettingsLabel(title: title, systemName: systemName, color: color)
+                Spacer()
+                DatePicker(title, selection: selection, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                    .opacity(viewModel.settings.usageTime.isEnabled ? 1 : SettingsMetrics.disabledOpacity)
+            }
         }
     }
 
