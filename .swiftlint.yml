@@ -1,0 +1,31 @@
+included:
+  - TaskManager
+  - TaskManagerUITests
+  - Packages/TaskManagerKit/Sources
+  - Packages/TaskManagerKit/Tests
+
+excluded:
+  - Packages/TaskManagerKit/.build
+
+disabled_rules:
+  # swift-format が複数行のコレクションに末尾カンマを付けるため、競合を避ける
+  - trailing_comma
+
+opt_in_rules:
+  - closure_spacing
+  - empty_count
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - modifier_order
+  - redundant_type_annotation
+  - toggle_bool
+  - unused_parameter
+
+line_length:
+  warning: 120
+  error: 160
+
+identifier_name:
+  excluded:
+    - id

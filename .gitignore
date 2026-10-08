@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Xcode（.xcodeproj は project.yml から生成するため管理しない）
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
