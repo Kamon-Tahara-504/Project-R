@@ -37,22 +37,42 @@ struct TaskListViewModelTests {
         #expect(viewModel.visibleTasks.count == 2)
     }
 
-    @Test("件数は選択中のカテゴリで表示しているタスクを、完了済みも含めて数える")
+    @Test("件数は選択中のカテゴリと並び順で表示しているタスクを数える")
     func countTextFollowsSelectedCategory() async {
         let fixture = TaskServiceFixture(
             tasks: [
                 TaskItem(title: "レポート", categoryID: school.id),
-                TaskItem(title: "小テスト", isCompleted: true, categoryID: school.id),
+                TaskItem(title: "小テスト", completedAt: now, categoryID: school.id),
                 TaskItem(title: "作品", categoryID: hobby.id),
             ],
             categories: [school, hobby]
         )
         let viewModel = makeViewModel(fixture: fixture)
         await viewModel.load()
-        #expect(viewModel.visibleTaskCountText == "3件のタスク")
+        #expect(viewModel.visibleTaskCountText == "2件のタスク")
 
         viewModel.selectedCategoryID = school.id
-        #expect(viewModel.visibleTaskCountText == "2件のタスク")
+        #expect(viewModel.visibleTaskCountText == "1件のタスク")
+
+        viewModel.sortOrder = .recentlyCompleted
+        #expect(viewModel.visibleTaskCountText == "1件の完了済みタスク")
+    }
+
+    @Test("完了順以外では完了済みタスクを表示せず、完了順では完了済みタスクだけを完了日時の新しい順に表示する")
+    func completedTasksAppearOnlyInCompletionOrder() async {
+        let pending = TaskItem(title: "未完了")
+        let earlier = TaskItem(title: "先に完了", completedAt: TestCalendar.date(2026, 1, 1, 7, 0))
+        let later = TaskItem(title: "後に完了", completedAt: TestCalendar.date(2026, 1, 1, 8, 0))
+        let viewModel = makeViewModel(fixture: TaskServiceFixture(tasks: [earlier, pending, later]))
+        await viewModel.load()
+
+        for order in [TaskSortOrder.dueDate, .newestFirst, .oldestFirst] {
+            viewModel.sortOrder = order
+            #expect(viewModel.visibleTasks.map(\.title) == ["未完了"])
+        }
+
+        viewModel.sortOrder = .recentlyCompleted
+        #expect(viewModel.visibleTasks.map(\.title) == ["後に完了", "先に完了"])
     }
 
     @Test("締切順では締切の近い順に並び、締切のないタスクは末尾になる")
@@ -66,6 +86,22 @@ struct TaskListViewModelTests {
         viewModel.sortOrder = .dueDate
 
         #expect(viewModel.visibleTasks.map(\.title) == ["先", "後", "締切なし"])
+    }
+
+    @Test("新しい順・古い順では、締切に関係なく作成日時で並ぶ")
+    func sortByCreatedAt() async {
+        let older = TaskItem(
+            title: "古い", createdAt: TestCalendar.date(2026, 1, 1, 7, 0), dueDate: TestCalendar.date(2026, 1, 20))
+        let newer = TaskItem(
+            title: "新しい", createdAt: TestCalendar.date(2026, 1, 1, 8, 0), dueDate: TestCalendar.date(2026, 1, 5))
+        let viewModel = makeViewModel(fixture: TaskServiceFixture(tasks: [older, newer]))
+        await viewModel.load()
+
+        viewModel.sortOrder = .newestFirst
+        #expect(viewModel.visibleTasks.map(\.title) == ["新しい", "古い"])
+
+        viewModel.sortOrder = .oldestFirst
+        #expect(viewModel.visibleTasks.map(\.title) == ["古い", "新しい"])
     }
 
     @Test("選択中のカテゴリを削除すると「全て」に戻る")

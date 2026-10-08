@@ -8,16 +8,26 @@ public enum TaskSortOrder: CaseIterable, Identifiable, Sendable {
     /// 締切の近い順。締切のないタスクは末尾
     case dueDate
     /// 作成日時の新しい順
-    case createdAt
+    case newestFirst
+    /// 作成日時の古い順
+    case oldestFirst
+    /// 完了日時の新しい順。この並び順のときだけ完了済みタスクを表示する
+    case recentlyCompleted
 
     public var id: Self { self }
 
+    /// 「新しい順」「古い順」が対になって読めるよう、作成日時の2つは「作成」を付けない
     public var title: String {
         switch self {
         case .dueDate: "締切順"
-        case .createdAt: "作成順"
+        case .newestFirst: "新しい順"
+        case .oldestFirst: "古い順"
+        case .recentlyCompleted: "完了順"
         }
     }
+
+    /// 完了済みタスクを表示する並び順か。それ以外の並び順では未完了のタスクだけを表示する
+    var showsCompletedTasks: Bool { self == .recentlyCompleted }
 }
 
 /// タスク画面の状態とロジック。
@@ -56,18 +66,24 @@ public final class TaskListViewModel {
         self.calendar = calendar
     }
 
-    /// 選択中のカテゴリで絞り込み、並び順を適用したタスク
+    /// 選択中のカテゴリと並び順（完了順なら完了済みのみ、それ以外は未完了のみ）で絞り込み、並べたタスク
     public var visibleTasks: [TaskItem] {
         let filtered = tasks.filter { task in
+            guard task.isCompleted == sortOrder.showsCompletedTasks else { return false }
             guard let selectedCategoryID else { return true }
             return task.categoryID == selectedCategoryID
         }
         return filtered.sorted(by: areInIncreasingOrder)
     }
 
-    /// 見出しに添える件数。選択中のカテゴリで表示しているタスク（完了済みを含む）を数える
+    /// 見出しに添える件数。表示しているタスクを数える
     public var visibleTaskCountText: String {
-        "\(visibleTasks.count)件のタスク"
+        sortOrder.showsCompletedTasks ? "\(visibleTasks.count)件の完了済みタスク" : "\(visibleTasks.count)件のタスク"
+    }
+
+    /// 表示するタスクがないときの見出し
+    public var emptyStateTitle: String {
+        sortOrder.showsCompletedTasks ? "完了したタスクはありません" : "タスクはまだありません"
     }
 
     public func load() async {
@@ -172,14 +188,26 @@ public final class TaskListViewModel {
     }
 
     private func areInIncreasingOrder(_ lhs: TaskItem, _ rhs: TaskItem) -> Bool {
-        if sortOrder == .dueDate, lhs.dueDate != rhs.dueDate {
-            switch (lhs.dueDate, rhs.dueDate) {
-            case (let lhsDate?, let rhsDate?): return lhsDate < rhsDate
-            case (.some, nil): return true
-            case (nil, .some): return false
-            case (nil, nil): break
-            }
+        switch sortOrder {
+        case .dueDate:
+            // 締切が同じタスク同士は、新しく作ったものを上に出す
+            isDueEarlier(lhs, rhs) ?? (lhs.createdAt > rhs.createdAt)
+        case .newestFirst:
+            lhs.createdAt > rhs.createdAt
+        case .oldestFirst:
+            lhs.createdAt < rhs.createdAt
+        case .recentlyCompleted:
+            (lhs.completedAt ?? .distantPast) > (rhs.completedAt ?? .distantPast)
         }
-        return lhs.createdAt > rhs.createdAt
+    }
+
+    /// 締切だけで順番が決まらない（締切が同じ）ときは `nil`
+    private func isDueEarlier(_ lhs: TaskItem, _ rhs: TaskItem) -> Bool? {
+        switch (lhs.dueDate, rhs.dueDate) {
+        case (let lhsDate?, let rhsDate?) where lhsDate != rhsDate: lhsDate < rhsDate
+        case (.some, nil): true
+        case (nil, .some): false
+        default: nil
+        }
     }
 }

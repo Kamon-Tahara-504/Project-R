@@ -91,7 +91,7 @@ struct TaskRow: View {
 #Preview {
     VStack {
         TaskRow(
-            task: TaskItem(title: "予定1", isCompleted: true),
+            task: TaskItem(title: "予定1", completedAt: .now),
             dueDateText: "1月1日(水)",
             remainingDaysText: "残り7日",
             isDueSoon: true,

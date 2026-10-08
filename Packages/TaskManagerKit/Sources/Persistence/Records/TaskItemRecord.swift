@@ -11,7 +11,9 @@ import SwiftData
 final class TaskItemRecord {
     @Attribute(.unique) var id: UUID
     var title: String
+    /// `completedAt` より前から保存していた完了状態。以前のデータの完了済みタスクを判別するために残している
     var isCompleted: Bool
+    var completedAt: Date?
     var createdAt: Date
     var categoryID: UUID?
     var dueDate: Date?
@@ -40,7 +42,8 @@ extension TaskItemRecord {
         TaskItem(
             id: id,
             title: title,
-            isCompleted: isCompleted,
+            // 完了日時を記録する前に完了したタスクは日時が分からないため、作成日時で代用する
+            completedAt: isCompleted ? (completedAt ?? createdAt) : nil,
             createdAt: createdAt,
             categoryID: categoryID,
             dueDate: dueDate,
@@ -55,6 +58,7 @@ extension TaskItemRecord {
     func apply(_ task: TaskItem) {
         title = task.title
         isCompleted = task.isCompleted
+        completedAt = task.completedAt
         categoryID = task.categoryID
         dueDate = task.dueDate
         scheduleStart = task.schedule?.start

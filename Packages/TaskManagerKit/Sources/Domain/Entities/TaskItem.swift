@@ -7,7 +7,10 @@ import Foundation
 public struct TaskItem: Identifiable, Equatable, Sendable {
     public let id: UUID
     public var title: String
-    public var isCompleted: Bool
+    /// 完了した日時。`nil` は未完了。
+    ///
+    /// 完了状態を Bool と別に持つと食い違うおそれがあるため、完了の有無もこの値で表す
+    public var completedAt: Date?
     public let createdAt: Date
     /// `nil` は未分類
     public var categoryID: TaskCategory.ID?
@@ -23,7 +26,7 @@ public struct TaskItem: Identifiable, Equatable, Sendable {
     public init(
         id: UUID = UUID(),
         title: String,
-        isCompleted: Bool = false,
+        completedAt: Date? = nil,
         createdAt: Date = .now,
         categoryID: TaskCategory.ID? = nil,
         dueDate: Date? = nil,
@@ -34,7 +37,7 @@ public struct TaskItem: Identifiable, Equatable, Sendable {
     ) {
         self.id = id
         self.title = title
-        self.isCompleted = isCompleted
+        self.completedAt = completedAt
         self.createdAt = createdAt
         self.categoryID = categoryID
         self.dueDate = dueDate
@@ -43,6 +46,8 @@ public struct TaskItem: Identifiable, Equatable, Sendable {
         self.url = url
         self.memo = memo
     }
+
+    public var isCompleted: Bool { completedAt != nil }
 
     /// 締切までの残り日数。
     ///
