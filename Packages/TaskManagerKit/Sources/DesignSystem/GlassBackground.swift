@@ -9,9 +9,11 @@ private struct GlassBackground<S: Shape>: ViewModifier {
     let tint: Color?
     /// 押したときにガラスが反応するか。入力欄のように押しても何も起きない部品では切る
     let isInteractive: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
         glass(content)
+            .id(colorScheme)
             // 影を中身に掛けると文字にも影が付くため、ガラスの下に敷いた同じ形にだけ掛ける
             .background {
                 shape
